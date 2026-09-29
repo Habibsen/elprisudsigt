@@ -326,6 +326,7 @@ function nowIndex() {
 
 function showDefaultReadout() {
   const i = state.selectedDate === localDateKey() ? nowIndex() : -1;
+  state.slots.forEach((s, k) => s.el?.classList.toggle('is-now', k === i));
   if (i >= 0 && state.slots[i].hour) {
     fillReadout(state.slots[i], state.slots[i].level);
   } else {

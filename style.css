@@ -420,6 +420,7 @@ button {
   left: 0;
   right: var(--axis-w);
   display: flex;
+  --bar-w: 64%;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -449,10 +450,15 @@ button {
 }
 .bar-col.is-active::before { opacity: 1; }
 
+/* Current hour on today's chart: a faint column wash, no label, no marker. */
+.bar-col.is-now::before { opacity: 0.6; }
+
+/* Bars are centred in their column and capped in width, so wide screens get
+   more air between hours instead of fat blocks. */
 .bar {
   position: absolute;
-  left: 18%;
-  right: 18%;
+  left: calc(50% - var(--bar-w) / 2);
+  width: var(--bar-w);
   top: var(--top);
   height: max(var(--height), 2px);
   border-radius: 3px;
@@ -490,10 +496,12 @@ button {
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
+/* Each label sits under the centre of its hour's bar. */
 .x-axis span {
   position: absolute;
   top: 8px;
-  left: calc(var(--x) / var(--n) * 100%);
+  left: calc((var(--x) + 0.5) / var(--n) * 100%);
+  transform: translateX(-50%);
   line-height: 1;
 }
 
@@ -776,10 +784,66 @@ button {
   .chart-state { top: 46px; }
 }
 
+/* Tablet / small laptop: same single column, simply given room. */
 @media (min-width: 600px) {
-  .app { padding-top: max(28px, env(safe-area-inset-top)); }
+  :root { --axis-w: 42px; --pad: max(32px, env(safe-area-inset-left)); --pad-r: max(32px, env(safe-area-inset-right)); }
+  .app {
+    max-width: 800px;
+    padding-top: max(28px, env(safe-area-inset-top));
+    padding-bottom: max(22px, env(safe-area-inset-bottom));
+  }
   .brand { font-size: 26px; }
-  .bar { left: 20%; right: 20%; }
+  .bars { --bar-w: 60%; }
+  .stat-value { font-size: 38px; }
+  .chart-plot { max-height: 480px; }
+}
+
+/* Desktop: a wide, calm chart. Controls and numbers stay at reading width on
+   the left; only the graph spans the full column. */
+@media (min-width: 1000px) {
+  :root { --axis-w: 48px; --pad: max(48px, env(safe-area-inset-left)); --pad-r: max(48px, env(safe-area-inset-right)); }
+  .app {
+    max-width: 1160px;
+    padding-top: max(40px, env(safe-area-inset-top));
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+  .topbar { min-height: 52px; }
+  .brand { font-size: 28px; }
+
+  .days { margin-top: 20px; }
+  .days-track { max-width: 700px; }
+  .day { min-height: 52px; font-size: 15px; }
+
+  .summary { margin-top: 40px; }
+  .summary-head { justify-content: flex-start; gap: 14px; }
+  .day-heading { font-size: 16px; }
+  .stats {
+    grid-template-columns: repeat(3, max-content);
+    column-gap: clamp(56px, 6vw, 96px);
+    margin-top: 16px;
+  }
+  .stat--avg,
+  .stat--high { text-align: left; }
+  .stat--avg dd,
+  .stat--high dd { align-items: flex-start; }
+  .stat-value { font-size: 46px; }
+  .stat-unit { font-size: 13px; margin-top: 5px; }
+
+  .chart-wrap { margin-top: 30px; }
+  .readout { height: 42px; gap: 12px; }
+  .readout-time { font-size: 15px; }
+  .readout-price { font-size: 24px; }
+  .chart-state { top: 42px; bottom: 30px; }
+
+  /* Small basis, then grow into the viewport: fits a 768px laptop, fills a tall monitor. */
+  .chart-plot { height: 300px; min-height: 280px; max-height: 560px; }
+  .bars { --bar-w: min(56%, 22px); }
+  .grid-line span { font-size: 12px; }
+  .x-axis { height: 30px; font-size: 12px; }
+  .x-axis span { top: 10px; }
+  .app[data-state="loading"] .chart-plot::after { top: 45%; }
+
+  .footer { padding-top: 20px; }
 }
 
 @media (max-height: 620px) {
