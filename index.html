@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#08090b">
+  <meta name="description" content="Elpriser time for time, i dag og de næste seks dage.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Elpris">
+  <meta name="format-detection" content="telephone=no">
+  <title>Elprisudsigt</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2308090b'/%3E%3Crect x='14' y='30' width='7' height='20' rx='2' fill='%2350d2b4'/%3E%3Crect x='28.5' y='20' width='7' height='30' rx='2' fill='%23878b94'/%3E%3Crect x='43' y='12' width='7' height='38' rx='2' fill='%23f0965a'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="ui.js"></script>
+</head>
+<body>
+  <div class="app" id="app" data-state="loading" aria-busy="true">
+
+    <header class="topbar">
+      <h1 class="brand">Elprisudsigt</h1>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="refresh-btn" type="button" aria-label="Opdater priser" title="Opdater">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>
+        </button>
+        <button class="icon-btn" id="settings-btn" type="button" aria-label="Indstillinger" aria-haspopup="dialog" aria-controls="settings-dialog" title="Indstillinger">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <nav class="days" aria-label="Vælg dag">
+      <div class="days-track" id="day-list" role="tablist" aria-label="Dage">
+        <!-- ui.js renders 7 buttons:
+             <button class="day" role="tab" data-date="YYYY-MM-DD" aria-selected="true|false" aria-controls="chart">
+               <span class="day-label">I dag</span><span class="day-dot" data-type="official|forecast|mixed|missing"></span>
+             </button> -->
+      </div>
+    </nav>
+
+    <main class="main" id="main">
+      <section class="summary" id="summary" aria-labelledby="day-heading" aria-live="polite">
+        <div class="summary-head">
+          <h2 class="day-heading" id="day-heading">&nbsp;</h2>
+          <span class="badge" id="type-badge" data-type="" hidden></span>
+        </div>
+        <dl class="stats">
+          <div class="stat stat--low">
+            <dt>Laveste</dt>
+            <dd><span class="stat-value" id="stat-min">…</span><span class="stat-unit">kr./kWh</span></dd>
+          </div>
+          <div class="stat stat--avg">
+            <dt>Gennemsnit</dt>
+            <dd><span class="stat-value" id="stat-avg">…</span><span class="stat-unit">kr./kWh</span></dd>
+          </div>
+          <div class="stat stat--high">
+            <dt>Højeste</dt>
+            <dd><span class="stat-value" id="stat-max">…</span><span class="stat-unit">kr./kWh</span></dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="chart-wrap" aria-label="Timepriser">
+        <div class="readout" id="tooltip" role="status" aria-live="polite" data-visible="false">
+          <span class="readout-time" id="tooltip-time">&nbsp;</span>
+          <span class="readout-price"><span id="tooltip-price">&nbsp;</span> <span class="readout-unit">kr./kWh</span></span>
+          <span class="readout-type" id="tooltip-type" data-type=""></span>
+        </div>
+
+        <figure class="chart" id="chart" role="tabpanel" aria-labelledby="day-heading">
+          <div class="chart-plot" id="chart-plot">
+            <div class="chart-grid" id="chart-grid" aria-hidden="true">
+              <!-- ui.js: <div class="grid-line" style="--y:40%"><span>1,00</span></div>
+                          <div class="grid-line grid-line--zero" style="--y:80%"><span>0</span></div> -->
+            </div>
+            <div class="bars" id="bars" role="group" aria-label="Pris pr. time">
+              <!-- ui.js renders one column per hour:
+                   <button class="bar-col" data-start="ISO" data-price="0.88" data-level="low|mid|high" data-type="official|forecast" aria-label="14:00-15:00, 0,88 kr./kWh, officiel">
+                     <span class="bar" style="--top:30%;--height:40%"></span>
+                   </button> -->
+            </div>
+          </div>
+          <div class="x-axis" id="x-axis" aria-hidden="true">
+            <span style="--x:0">00</span><span style="--x:3">03</span><span style="--x:6">06</span><span style="--x:9">09</span>
+            <span style="--x:12">12</span><span style="--x:15">15</span><span style="--x:18">18</span><span style="--x:21">21</span>
+          </div>
+          <figcaption class="visually-hidden" id="chart-caption">Søjlediagram over elprisen time for time.</figcaption>
+        </figure>
+
+        <div class="chart-state" id="chart-state" role="status" aria-live="polite" hidden>
+          <p class="chart-state-text" id="chart-state-text">Henter priser…</p>
+          <button class="text-btn" id="retry-btn" type="button" hidden>Prøv igen</button>
+        </div>
+      </section>
+
+      <p class="notice" id="notice" role="status" hidden></p>
+    </main>
+
+    <footer class="footer" id="footer">
+      <span id="updated">Opdateret …</span>
+      <span class="footer-sep" aria-hidden="true">·</span>
+      <span id="markup-note">Inkl. moms og tillæg</span>
+    </footer>
+  </div>
+
+  <dialog class="sheet" id="settings-dialog" aria-labelledby="settings-title">
+    <form class="sheet-inner" id="settings-form" method="dialog">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <header class="sheet-head">
+        <h2 id="settings-title">Indstillinger</h2>
+        <button class="icon-btn icon-btn--small" type="submit" value="cancel" formnovalidate aria-label="Luk">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+
+      <div class="field">
+        <label for="markup-input">Tillæg fra elselskab</label>
+        <div class="input-row">
+          <input id="markup-input" name="markup" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="markup-help markup-error">
+          <span class="input-suffix">kr./kWh</span>
+        </div>
+        <p class="field-help" id="markup-help">Inkl. moms. Standard er 0,09 kr./kWh (EVDK). Abonnementer indgår ikke.</p>
+        <p class="field-error" id="markup-error" role="alert" hidden></p>
+      </div>
+
+      <div class="sheet-actions">
+        <button class="text-btn" type="button" id="markup-reset">Nulstil</button>
+        <button class="primary-btn" type="submit" value="save" id="settings-save">Gem</button>
+      </div>
+
+      <details class="assumptions">
+        <summary>Beregning og kilder</summary>
+        <div class="assumptions-body" id="assumptions"></div>
+      </details>
+    </form>
+  </dialog>
+</body>
+</html>
